@@ -14,11 +14,9 @@ layout: default
     <ul class="post-list">
       {%- for district_page in site.districts -%}
       <li>
-        <h3>
-          <a class="post-link" href="{{ district_page.url | relative_url }}">
-            {{ district_page.title | escape }}
-          </a>
-        </h3>
+        <a class="post-link" href="{{ district_page.url | relative_url }}">
+          {{ district_page.title | escape }}
+        </a>
       </li>
       {%- endfor -%}
     </ul>

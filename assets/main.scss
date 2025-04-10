@@ -93,6 +93,8 @@
   .dropdown-menu {
     position: absolute;
     top: 100%;
+    columns: 3;
+    -webkit-columns: 3;
     right: 0;
     background: #fff;
     border: 1px solid #ddd;
@@ -123,6 +125,14 @@
       }
     }
   }
+}
+
+.post-list {
+  columns: 3;
+  -webkit-columns: 3;
+}
+.post-list li {
+    margin-bottom: 0.5em;
 }
 
 .site-footer {
