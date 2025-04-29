@@ -336,7 +336,8 @@ function create_district_map(id, bounds, options) {
     legend_breaks: ['0%', '5%', '10%', '15%+'],
     legend_title: 'Estimated<br/>HIV Prevalence',
     pop_cutoff_low: 50,
-    pop_cutoff_high: 200
+    pop_cutoff_high: 200,
+    zoom_min: 10
   };
   options = {...default_options, ...options};
 
@@ -356,6 +357,9 @@ function create_district_map(id, bounds, options) {
     }
   }).addTo(map);
   map.fitBounds(district_layer.getBounds());
+  if(map.getZoom() < options.zoom_min){
+    map.setView(map.getCenter(), options.zoom_min);
+  }
 
   // Create all toggleable layers
   var base_layers = {};
