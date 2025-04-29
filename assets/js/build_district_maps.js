@@ -1,10 +1,12 @@
 // DUMMY: These will be read from a data file in the future
-const viz_options = {};
+if(typeof viz_options === 'undefined') {
+  var viz_options = {};
+}
 const default_viz_options = {
   prevalence: {
     pop_cutoff_low: 50,
     pop_cutoff_high: 150,
-    use_col: 'prev15to49_mean',
+    use_col: 'pr_m',
     lower: 0.0,
     upper: 0.15,
     fill_palette: [
@@ -17,7 +19,7 @@ const default_viz_options = {
   viraemia: {
     pop_cutoff_low: 50,
     pop_cutoff_high: 150,
-    use_col: 'viraemia15to49_mean',
+    use_col: 'vr_m',
     lower: 0.005,
     upper: 0.020,
     legend_breaks: ['0.5%', '1.0%', '1.5%', '2.0%'],
@@ -30,7 +32,7 @@ const default_viz_options = {
   vls: {
     pop_cutoff_low: 50,
     pop_cutoff_high: 150,
-    use_col: 'vls15to49_mean',
+    use_col: 'vl_m',
     lower: 0.7,
     upper: 1.0,
     legend_breaks: ['<=70%', '80%', '90%', '100%'],
@@ -50,6 +52,12 @@ create_map('hiv-prevalence-map', boundaries, prevalence_options);
 const vls_options = {...default_viz_options.vls, ...viz_options.vls};
 create_map('viral-load-suppression-map', boundaries, vls_options);
 
-// Fill tables with placeholders
-document.getElementById('traditional-authorities-table').innerHTML = '<strong>PLACEHOLDER</strong>';
-document.getElementById('health-facilities-table').innerHTML = '<strong>PLACEHOLDER</strong>';
+// Add tables to district pages
+CsvToHtmlTable.init({
+  csv_path: 'data/' + district_name + '_tas.csv',
+  element: 'traditional-authorities-table'
+});
+CsvToHtmlTable.init({
+  csv_path: 'data/' + district_name + '_facilities.csv',
+  element: 'health-facilities-table'
+});

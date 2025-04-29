@@ -39,14 +39,14 @@ function poly_tooltip(layer, ind_suffix = ''){
   // Add indicators to labels
   var labs = [];
   const indLabels = {
-    viraemia: 'HIV viraemia',
-    prev: 'HIV prevalence',
-    vls: 'Viral load suppression'
+    vr: 'HIV viraemia',
+    pr: 'HIV prevalence',
+    vl: 'Viral load suppression'
   };
   Object.entries(indLabels).forEach(([ind, indLabel]) => {
-    const acc = ind === 'viraemia' ? 1 : 0.1;
-    const meanVar = `${ind}15to49_mean${ind_suffix}`;
-    const uiVars = [`${ind}15to49_lower${ind_suffix}`, `${ind}15to49_upper${ind_suffix}`];
+    const acc = ind === 'vr' ? 1 : 0.1;
+    const meanVar = `${ind}_m${ind_suffix}`;
+    const uiVars = [`${ind}_l${ind_suffix}`, `${ind}_u${ind_suffix}`];
     var this_lab = '';
     if (cols.includes(meanVar)) {
       this_lab += `<i>${indLabel}</i>: ${(props[meanVar] * 100).toFixed(acc)}%`;
@@ -256,7 +256,7 @@ function new_tile(url, options){
 // Assumes the div with id map already exists
 function create_map(id, bounds, options) {
   const default_options = {
-    use_col: 'prev15to49_mean',
+    use_col: 'pr_m',
     lower: 0.0,
     upper: 0.15,
     fill_palette: [
