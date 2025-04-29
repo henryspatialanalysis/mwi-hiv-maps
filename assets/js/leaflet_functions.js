@@ -10,9 +10,9 @@ function pct(outcome, acc = 0.1, suffix = true) {
   return (outcome * 100).toFixed(acc) + suffixMark;
 }
 
-// Create labels for map areas ---------------------------------------------------------->
+// Create labels for map *polygons* ----------------------------------------------------->
 
-function poly_tooltop(layer, ind_suffix = ''){
+function poly_tooltip(layer, ind_suffix = ''){
   const props = layer.feature.properties;
   const cols = Object.keys(props);
   const LOW_POP_CUTOFF = 50;
@@ -44,7 +44,7 @@ function poly_tooltop(layer, ind_suffix = ''){
     vls: 'Viral load suppression'
   };
   Object.entries(indLabels).forEach(([ind, indLabel]) => {
-    const acc = ind === 'vls' ? 1 : 0.1;
+    const acc = ind === 'viraemia' ? 1 : 0.1;
     const meanVar = `${ind}15to49_mean${ind_suffix}`;
     const uiVars = [`${ind}15to49_lower${ind_suffix}`, `${ind}15to49_upper${ind_suffix}`];
     var this_lab = '';
@@ -67,6 +67,21 @@ function poly_tooltop(layer, ind_suffix = ''){
   }
   inner_html += labs.join('<br/>');
 
+  return inner_html;
+}
+
+// Create popup labels for map *points* ------------------------------------------------->
+
+function point_popup(layer){
+  const props = layer.feature.properties;
+  var inner_html = `
+    <b>${props['facility_name']}</b><br/>
+    <i>Type:</i> ${props['facility_type']}<br/>
+    <i>Location:</i> ${props['taname']} (${props['restype']})<br/>
+    <i>Services:</i> ${props['health_service']}<br/>
+    <i>ART cohort (Q4 2023):</i> ${cma(props['art_out'])}<br/>
+    <i>Catchment population:</i> ${cma(props['pop_15to49'])}<br/>
+  `;
   return inner_html;
 }
 
@@ -180,31 +195,48 @@ function prepare_legend(options){
 // Helper function to create a GeoJSON layer for Leaflet
 function new_geojson(data, options){
   const default_options = {
+    weight: 0.7,
+    color: '#777777',
     ind_suffix: '',
-    type: 'polygons'
+    type: 'polygons',
+    use_pop_for_opacity: false
   };
   options = {...default_options, ...options};
-  let style_fun = {}
-  if(options.type === 'polygons'){
-    let fill_column = options.use_col + options.ind_suffix;
-    let fill_scale = (chroma
-      .scale(options.fill_palette)
-      .domain([options.lower, options.upper])
-    );
-    style_fun = (feature) => {
-      let feature_color = fill_scale(feature.properties[fill_column]);
-      return {
-        color: feature_color,
-        fillColor: feature_color,
-        fillOpacity: 0.85
-      };
+  let fill_column = options.use_col + options.ind_suffix;
+  let fill_scale = (chroma
+    .scale(options.fill_palette)
+    .domain([options.lower, options.upper])
+  );
+  var fill_opacity_fun = (_) => 0.5;
+  if(options.use_pop_for_opacity){
+    fill_opacity_fun = (pop) => {
+      return pop >= options.pop_cutoff_high ? 0.8 :
+        pop <= options.pop_cutoff_low ? 0.2 :
+        0.5;
     }
   }
-  return L
-    .geoJSON(data, {style: style_fun})
-    .bindTooltip(function(layer){
-      return poly_tooltop(layer, options.ind_suffix);
+  let style_fun = (feature) => {
+    return {
+      weight: options.weight,
+      color: options.color,
+      fillColor: fill_scale(feature.properties[fill_column]),
+      fillOpacity: fill_opacity_fun(feature.properties['pop_15to49'])
+    };
+  };
+  let onEachFeature = (_, layer) => {
+    layer.on('mouseover', function(){
+      layer.setStyle({
+        weight: 4,
+        color: '#FFFF00',
+      });
+      layer.bringToFront();
     });
+    layer.on('mouseout', () => layer.setStyle(style_fun(layer.feature)));
+  };
+  let geojsonLayer = L
+    .geoJSON(data, {style: style_fun, onEachFeature: onEachFeature})
+    .bindTooltip((layer) => poly_tooltip(layer, options.ind_suffix));
+  return geojsonLayer
 }
 
 
@@ -269,15 +301,23 @@ function create_map(id, bounds, options) {
     }
   }).addTo(map);
   map.fitBounds(district_layer.getBounds());
+
   // Create all toggleable layers
   var base_layers = {};
-  base_layers['High resolution'] = new_geojson(bounds.h3, options).addTo(map);
-  base_layers['Group village head'] = new_geojson(bounds.gvh, {...options, ind_suffix: '_gvh'});
+  base_layers['High resolution'] = new_geojson(
+    bounds.h3,
+    {...options, weight: 0.1, use_pop_for_opacity: true}
+  ).addTo(map);
+  base_layers['Group village head'] = new_geojson(
+    bounds.gvh,
+    {...options, ind_suffix: '_gvh'}
+  );
   base_layers['Traditional authority'] = new_geojson(bounds.ta, options);
   base_layers['Facility catchment'] = new_geojson(
     bounds.closest_facilities,
     {...options, ind_suffix: '_gcf'}
   );
+
   // Add layers that may not exist: survey facilities
   if(bounds_keys.includes('survey_facilities')){
     base_layers['Survey facilities'] = new_geojson(
@@ -285,22 +325,24 @@ function create_map(id, bounds, options) {
       {...options, ind_suffix: '_scf'}
     );
   }
+
   // Add optional layers:
   var optional_layers = {};
-  optional_layers['Health facility locations'] = new_geojson(
-    bounds.facility_points,
-    {type: 'points'}
-  );
+  optional_layers['Health facility locations'] = L
+    .geoJSON(bounds.facility_points)
+    .bindPopup((layer) => point_popup(layer));
   if(bounds_keys.includes('dropped_facility_points')){
-    optional_layers['<i>(Excluded health facilities)</i>'] = new_geojson(
-      bounds.dropped_facility_points,
-      {type: 'points'}
-    );
+    optional_layers['<i>(Excluded health facilities)</i>'] = L
+      .geoJSON(bounds.dropped_facility_points)
+      .bindPopup((layer) => point_popup(layer));
   }
   const catch_title = 'Facility catchment<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boundaries';
   optional_layers[catch_title] = L.geoJSON(
-    bounds.closest_facilities,
-    {style: {opacity: 0.85, color: "#0000FF", dashArray: "5, 10", fillOpacity: 0}}
+    bounds.closest_facilities, {
+      style: {opacity: 0.85, color: "#0000FF", dashArray: "5, 10", fillOpacity: 0},
+      interactive: false,
+      pane: 'shadowPane'
+    }
   );
   const layerControl = L.control.layers(base_layers, optional_layers, {collapsed: false});
   layerControl.addTo(map);

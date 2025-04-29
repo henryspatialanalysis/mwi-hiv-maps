@@ -18,9 +18,9 @@ const default_viz_options = {
     pop_cutoff_low: 50,
     pop_cutoff_high: 150,
     use_col: 'viraemia15to49_mean',
-    lower: 0.0,
-    upper: 0.10,
-    legend_breaks: ['0%', '5%', '10%'],
+    lower: 0.005,
+    upper: 0.020,
+    legend_breaks: ['0.5%', '1.0%', '1.5%', '2.0%'],
     fill_palette: [
       '#30123B','#4454C4','#4490FE','#1FC8DE','#29EFA2','#7DFF56','#C1F334',
       '#F1CA3A','#FE922A'
