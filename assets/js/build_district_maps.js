@@ -78,5 +78,5 @@ function import_html_table(path, element_id){
     });
 }
 
-import_html_table('data/' + district_name + '_tas.html', 'traditional-authorities-table');
-import_html_table('data/' + district_name + '_facilities.html', 'health-facilities-table');
+import_html_table('./data/' + district_name + '_tas.html', 'traditional-authorities-table');
+import_html_table('./data/' + district_name + '_facilities.html', 'health-facilities-table');

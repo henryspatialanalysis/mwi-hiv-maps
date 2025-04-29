@@ -91,7 +91,7 @@ function point_popup(layer){
 function district_popup(layer){
   const props = layer.feature.properties;
   var inner_html = `
-    <a href="/${props['area_name']}.html"><b>${props['area_name']}</b></a>
+    <a href="./${props['area_name']}.html"><b>${props['area_name']}</b></a>
   `;
   return inner_html;
 }

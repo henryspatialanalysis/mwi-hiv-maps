@@ -26,7 +26,7 @@
           <ul class="dropdown-menu" role="menu">
             {% for district_page in site.districts %}
             <li>
-              <a href="{{ district_page.url }}">{{ district_page.title }}</a>
+              <a href="{{ district_page.url | relative_url }}">{{ district_page.title }}</a>
             </li>
             {% endfor %}
           </ul>
