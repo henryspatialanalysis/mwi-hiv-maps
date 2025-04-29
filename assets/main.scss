@@ -10,7 +10,7 @@
   padding: 1rem 0;
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 9000;
 }
 
 .banner-container {
@@ -157,3 +157,12 @@ h2 {
   margin-bottom: 0.5rem;
 }
 
+.leaflet-legend {
+  background-color: #fff;
+  color: #333;
+  background-clip: padding-box;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  padding: 6px 10px 6px 6px;
+  border-radius: 5px;
+  opacity: 0.95;
+}
