@@ -1,4 +1,15 @@
-// DUMMY: These will be read from a data file in the future
+// -------------------------------------------------------------------------------------->
+//
+// CREATE DISTRICT MAPS AND SUMMARY TABLES
+//
+// AUTHOR: Nat Henry, nat@henryspatialanalysis.com
+// CREATED: April 2025
+// PURPOSE: More performant and flexible district maps for RESPOND
+//
+// -------------------------------------------------------------------------------------->
+
+// Set visualization options ------------------------------------------------------------>
+
 if(typeof viz_options === 'undefined') {
   var viz_options = {};
 }
@@ -44,15 +55,20 @@ const default_viz_options = {
   }
 }
 
-// Script used to build district-specific maps
+// Build district-specific maps ------------------------------------------------->
+
 const viraemia_options = {...default_viz_options.viraemia, ...viz_options.viraemia};
 create_map('hiv-viraemia-map', boundaries, viraemia_options);
+
 const prevalence_options = {...default_viz_options.prevalence, ...viz_options.prevalence};
 create_map('hiv-prevalence-map', boundaries, prevalence_options);
+
 const vls_options = {...default_viz_options.vls, ...viz_options.vls};
 create_map('viral-load-suppression-map', boundaries, vls_options);
 
-// Add tables to district pages
+
+// Add tables to district pages --------------------------------------------------------->
+
 function import_html_table(path, element_id){
   fetch(path)
     .then(response => response.text())
@@ -61,5 +77,6 @@ function import_html_table(path, element_id){
       containerElement.innerHTML = data;
     });
 }
+
 import_html_table('data/' + district_name + '_tas.html', 'traditional-authorities-table');
 import_html_table('data/' + district_name + '_facilities.html', 'health-facilities-table');
