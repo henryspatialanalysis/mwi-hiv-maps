@@ -5,4 +5,3 @@
 layout: home
 ---
 
-[More details about the maps](/about/)

@@ -86,6 +86,16 @@ function point_popup(layer){
 }
 
 
+// Create popup labels for district boundaries ------------------------------------------>
+
+function district_popup(layer){
+  const props = layer.feature.properties;
+  var inner_html = `
+    <a href="/${props['area_name']}.html"><b>${props['area_name']}</b></a>
+  `;
+  return inner_html;
+}
+
 // Function to add a legend to the map -------------------------------------------------->
 
 function prepare_legend(options){
@@ -203,6 +213,7 @@ function new_geojson(data, options){
     type: 'polygons',
     interactive: true,
     overlay: false,
+    tooltip: true,
     use_pop_for_opacity: true
   };
   options = {...default_options, ...options};
@@ -256,7 +267,7 @@ function new_geojson(data, options){
       data,
       {style: style_fun, interactive: options.interactive, onEachFeature: onEachFeature}
     )
-  if(options.interactive){
+  if(options.interactive && options.tooltip){
     geojsonLayer.bindTooltip((layer) => poly_tooltip(layer, options.ind_suffix));
   }
   return geojsonLayer
@@ -295,10 +306,25 @@ function add_tile_layers(map){
   ).addTo(map);
 }
 
+function add_national_tile_layers(map){
+  new_tile(
+    'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+    {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>, ' +
+        '<a href="https://carto.com/attributions">CARTO</a>, ' +
+        '<a href="https://www.stadiamaps.com/">Stadia</a>'
+    }
+  ).addTo(national_map);
+  new_tile(
+    'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
+    {pane: 'shadowPane'}
+  ).addTo(map);
+}
+
 // Template to create a leaflet map ----------------------------------------------------->
 
 // Assumes the div with id map already exists
-function create_map(id, bounds, options) {
+function create_district_map(id, bounds, options) {
   const default_options = {
     use_col: 'pr_m',
     lower: 0.0,
@@ -315,7 +341,7 @@ function create_map(id, bounds, options) {
   options = {...default_options, ...options};
 
   // Create map
-  const map = L.map(id);
+  const map = L.map(id, {zoomSnap: 0.2});
   const bounds_keys = Object.keys(bounds);
 
   // Add base layers

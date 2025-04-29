@@ -58,13 +58,13 @@ const default_viz_options = {
 // Build district-specific maps ------------------------------------------------->
 
 const viraemia_options = {...default_viz_options.viraemia, ...viz_options.viraemia};
-create_map('hiv-viraemia-map', boundaries, viraemia_options);
+create_district_map('hiv-viraemia-map', boundaries, viraemia_options);
 
 const prevalence_options = {...default_viz_options.prevalence, ...viz_options.prevalence};
-create_map('hiv-prevalence-map', boundaries, prevalence_options);
+create_district_map('hiv-prevalence-map', boundaries, prevalence_options);
 
 const vls_options = {...default_viz_options.vls, ...viz_options.vls};
-create_map('viral-load-suppression-map', boundaries, vls_options);
+create_district_map('viral-load-suppression-map', boundaries, vls_options);
 
 
 // Add tables to district pages --------------------------------------------------------->
