@@ -53,11 +53,13 @@ const vls_options = {...default_viz_options.vls, ...viz_options.vls};
 create_map('viral-load-suppression-map', boundaries, vls_options);
 
 // Add tables to district pages
-CsvToHtmlTable.init({
-  csv_path: 'data/' + district_name + '_tas.csv',
-  element: 'traditional-authorities-table'
-});
-CsvToHtmlTable.init({
-  csv_path: 'data/' + district_name + '_facilities.csv',
-  element: 'health-facilities-table'
-});
+function import_html_table(path, element_id){
+  fetch(path)
+    .then(response => response.text())
+    .then(data => {
+      const containerElement = document.getElementById(element_id);
+      containerElement.innerHTML = data;
+    });
+}
+import_html_table('data/' + district_name + '_tas.html', 'traditional-authorities-table');
+import_html_table('data/' + district_name + '_facilities.html', 'health-facilities-table');
