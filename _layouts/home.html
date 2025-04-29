@@ -9,6 +9,8 @@ layout: default
 
   {{ content }}
 
+  <div id="national-map" class="leaflet-map"></div>
+
   {%- if site.districts.size > 0 -%}
     <h2 class="post-list-heading">Districts</h2>
     <ul class="post-list">
@@ -21,5 +23,12 @@ layout: default
       {%- endfor -%}
     </ul>
   {%- endif -%}
+
+  <!-- End of page content -->
+
+  <script src="{{ '/assets/js/leaflet_functions.js' | relative_url }}"></script>
+  <script src="{{ '/data/national.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/build_national_map.js' | relative_url }}"></script>
+
 
 </div>
