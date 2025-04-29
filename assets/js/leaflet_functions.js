@@ -196,7 +196,7 @@ function prepare_legend(options){
 
 function new_geojson(data, options){
   const default_options = {
-    weight: 0.1,
+    weight: 0,
     overlayWeight: 0.7,
     color: '#777777',
     ind_suffix: '',
@@ -333,7 +333,7 @@ function create_map(id, bounds, options) {
 
   // Create all toggleable layers
   var base_layers = {};
-  base_layers['High resolution'] = new_geojson(bounds.h3, options).addTo(map);
+  base_layers['High resolution'] = new_geojson(bounds.h3, {...options, weight: 0.15}).addTo(map);
   base_layers['Group village head'] = L.layerGroup([
     new_geojson(bounds.h3, {...options, interactive: false, ind_suffix: '_gvh'}),
     new_geojson(bounds.gvh, {...options, overlay: true, ind_suffix: '_gvh'})
