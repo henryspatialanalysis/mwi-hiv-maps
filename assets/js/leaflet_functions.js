@@ -192,14 +192,18 @@ function prepare_legend(options){
 }
 
 
-// Helper function to create a GeoJSON layer for Leaflet
+// Helper function to create a GeoJSON layer for Leaflet -------------------------------->
+
 function new_geojson(data, options){
   const default_options = {
-    weight: 0.7,
+    weight: 0.1,
+    overlayWeight: 0.7,
     color: '#777777',
     ind_suffix: '',
     type: 'polygons',
-    use_pop_for_opacity: false
+    interactive: true,
+    overlay: false,
+    use_pop_for_opacity: true
   };
   options = {...default_options, ...options};
   let fill_column = options.use_col + options.ind_suffix;
@@ -215,30 +219,51 @@ function new_geojson(data, options){
         0.5;
     }
   }
-  let style_fun = (feature) => {
-    return {
-      weight: options.weight,
-      color: options.color,
-      fillColor: fill_scale(feature.properties[fill_column]),
-      fillOpacity: fill_opacity_fun(feature.properties['pop_15to49'])
-    };
-  };
-  let onEachFeature = (_, layer) => {
-    layer.on('mouseover', function(){
-      layer.setStyle({
+  let style_fun = null
+  if(options.overlay){
+    style_fun = (feature) => {
+      return {
+        weight: options.overlayWeight,
+        color: options.color,
+        fillOpacity: 0
+      };
+    }
+  } else {
+    style_fun = (feature) => {
+      return {
+        weight: options.weight,
+        color: options.color,
+        fillColor: fill_scale(feature.properties[fill_column]),
+        fillOpacity: fill_opacity_fun(feature.properties['pop_15to49'])
+      };
+    }
+  }
+  let onEachFeature = null;
+  if(options.interactive){
+    onEachFeature = (_, layer) => {
+      layer.on('mouseover', function(){
+        layer.setStyle({
         weight: 4,
         color: '#FFFF00',
       });
       layer.bringToFront();
     });
-    layer.on('mouseout', () => layer.setStyle(style_fun(layer.feature)));
-  };
+      layer.on('mouseout', () => layer.setStyle(style_fun(layer.feature)));
+    };
+  }
   let geojsonLayer = L
-    .geoJSON(data, {style: style_fun, onEachFeature: onEachFeature})
-    .bindTooltip((layer) => poly_tooltip(layer, options.ind_suffix));
+    .geoJSON(
+      data,
+      {style: style_fun, interactive: options.interactive, onEachFeature: onEachFeature}
+    )
+  if(options.interactive){
+    geojsonLayer.bindTooltip((layer) => poly_tooltip(layer, options.ind_suffix));
+  }
   return geojsonLayer
 }
 
+
+// Helper function to create tile layers for Leaflet ------------------------------------>
 
 function new_tile(url, options){
   const default_options = {
@@ -249,6 +274,25 @@ function new_tile(url, options){
   };
   options = {...default_options, ...options};
   return L.tileLayer(url, options);
+}
+
+function add_tile_layers(map){
+  new_tile(
+    'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+    {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>, ' +
+        '<a href="https://carto.com/attributions">CARTO</a>, ' +
+        '<a href="https://www.stadiamaps.com/">Stadia</a>'
+    }
+  ).addTo(map);
+  new_tile(
+    'https://tiles.stadiamaps.com/tiles/stamen_toner_lines/{z}/{x}/{y}{r}.png',
+    {subdomains: '', pane: 'shadowPane'}
+  ).addTo(map);
+  new_tile(
+    'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
+    {pane: 'shadowPane'}
+  ).addTo(map);
 }
 
 // Template to create a leaflet map ----------------------------------------------------->
@@ -275,22 +319,7 @@ function create_map(id, bounds, options) {
   const bounds_keys = Object.keys(bounds);
 
   // Add base layers
-  new_tile(
-    'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
-    {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>, ' +
-        '<a href="https://carto.com/attributions">CARTO</a>, ' +
-        '<a href="https://www.stadiamaps.com/">Stadia</a>'
-    }
-  ).addTo(map);
-  new_tile(
-    'https://tiles.stadiamaps.com/tiles/stamen_toner_lines/{z}/{x}/{y}{r}.png',
-    {subdomains: '', pane: 'shadowPane'}
-  ).addTo(map);
-  new_tile(
-    'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
-    {pane: 'shadowPane'}
-  ).addTo(map);
+  add_tile_layers(map);
 
   // Add district boundaries
   const district_layer = L.geoJSON(bounds.district, {
@@ -304,26 +333,26 @@ function create_map(id, bounds, options) {
 
   // Create all toggleable layers
   var base_layers = {};
-  base_layers['High resolution'] = new_geojson(
-    bounds.h3,
-    {...options, weight: 0.1, use_pop_for_opacity: true}
-  ).addTo(map);
-  base_layers['Group village head'] = new_geojson(
-    bounds.gvh,
-    {...options, ind_suffix: '_gvh'}
-  );
-  base_layers['Traditional authority'] = new_geojson(bounds.ta, options);
-  base_layers['Facility catchment'] = new_geojson(
-    bounds.closest_facilities,
-    {...options, ind_suffix: '_gcf'}
-  );
+  base_layers['High resolution'] = new_geojson(bounds.h3, options).addTo(map);
+  base_layers['Group village head'] = L.layerGroup([
+    new_geojson(bounds.h3, {...options, interactive: false, ind_suffix: '_gvh'}),
+    new_geojson(bounds.gvh, {...options, overlay: true, ind_suffix: '_gvh'})
+  ]);
+  base_layers['Traditional authority'] = L.layerGroup([
+    new_geojson(bounds.h3, {...options, interactive: false, ind_suffix: '_ta'}),
+    new_geojson(bounds.ta, {...options, overlay: true})
+  ]);
+  base_layers['Facility catchment'] = L.layerGroup([
+    new_geojson(bounds.h3, {...options, interactive: false, ind_suffix: '_gcf'}),
+    new_geojson(bounds.closest_facilities, {...options, overlay: true, ind_suffix: '_gcf'})
+  ]);
 
   // Add layers that may not exist: survey facilities
   if(bounds_keys.includes('survey_facilities')){
-    base_layers['Survey facilities'] = new_geojson(
-      bounds.survey_facilities,
-      {...options, ind_suffix: '_scf'}
-    );
+    base_layers['Survey facilities'] = L.layerGroup([
+      new_geojson(bounds.h3, {...options, interactive: false, ind_suffix: '_scf'}),
+      new_geojson(bounds.survey_facilities, {...options, overlay: true, ind_suffix: '_scf'})
+    ]);
   }
 
   // Add optional layers:
